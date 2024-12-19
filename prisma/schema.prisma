@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("admins")
+}
+
+model Class {
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  name     String
+  sections Section[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("classes")
+}
+
+model Section {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  class     Class     @relation(fields: [classId], references: [id])
+  classId   String    @db.ObjectId
+  students  Student[]
+
+  @@map("sections")
+}
+
+model Student {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  section   Section  @relation(fields: [sectionId], references: [id])
+  sectionId String   @db.ObjectId
+  marks     Mark[]
+
+  enrolledSubjects SubjectEnrollment[]
+
+  @@map("students")
+}
+
+model Teacher {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subjects Subject[]
+
+  @@map("teachers")
+}
+
+model Subject {
+  id               String              @id @default(auto()) @map("_id") @db.ObjectId
+  name             String
+  totalMarks       Float
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  teacherId        String              @db.ObjectId
+  teacher          Teacher             @relation(fields: [teacherId], references: [id])
+  marks            Mark[]
+  enrolledSubjects SubjectEnrollment[]
+
+  commonForAllStudents Boolean @default(true)
+
+  @@map("subjects")
+}
+
+model Mark {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  studentId   String   @db.ObjectId
+  subjectId   String   @db.ObjectId
+  obtainMarks Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id])
+  subject Subject @relation(fields: [subjectId], references: [id])
+
+  @@unique([studentId, subjectId])
+  @@map("marks")
+}
+
+model SubjectEnrollment {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  studentId  String   @db.ObjectId
+  subjectId  String   @db.ObjectId
+  enrolledAt DateTime @default(now())
+
+  student Student @relation(fields: [studentId], references: [id])
+  subject Subject @relation(fields: [subjectId], references: [id])
+
+  @@unique([studentId, subjectId])
+  @@map("subject_enrollments")
+}
